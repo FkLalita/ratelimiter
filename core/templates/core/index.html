@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Rate Limiter Test</title>
+</head>
+<body>
+    <h1>Test Your Rate Limiter</h1>
+    <button id="test-button">Send Request</button>
+    <div id="response"></div>
+
+    <script>
+        const button = document.getElementById('test-button');
+        const responseDiv = document.getElementById('response');
+
+        button.addEventListener('click', async () => {
+            const response = await fetch('/test-ratelimit');
+            responseDiv.textContent = await response.text();
+        });
+    </script>
+</body>
+</html>
+
