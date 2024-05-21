@@ -1,9 +1,13 @@
 from django.conf import settings
 from django.http import HttpResponse
 from redis import StrictRedis
+from asgiref.sync import iscoroutinefunction, markcoroutinefunction
 
 
 class RateLimiterMiddleware:
+    async_capable = True
+    sync_capable = False
+
     def __init__(self, get_response):
         self.get_response = get_response
         self.redis_client = StrictRedis(
@@ -15,6 +19,9 @@ class RateLimiterMiddleware:
                 'DB', 0)  # Use specific database if provided
         )
 
+        if iscoroutinefunction(self.get_response):
+            markcoroutinefunction(self)
+
     async def __call__(self, request):
         # Define rate limit parameters (adjust as needed)
         limit = 2  # Maximum requests per window
@@ -23,16 +30,16 @@ class RateLimiterMiddleware:
         key = f'rate_limit:{request.META.get("REMOTE_ADDR")}'
 
         # Check rate limit using Redis atomic operations
-        current_requests = await self.redis_client.incr(key)
+        current_requests = self.redis_client.incr(key)
         if current_requests > limit:
             # Reset counter after window
-            await self.redis_client.expire(key, window)
+            self.redis_client.expire(key, window)
             return self.handle_throttled_request(request)
 
         # Allow request if within limit
-        response = await next(self.get_response(request))
+        response = await self.get_response(request)
         # Decrement counter after successful request
-        await self.redis_client.decr(key)
+        self.redis_client.decr(key)
         return response
 
     def handle_throttled_request(self, request):
