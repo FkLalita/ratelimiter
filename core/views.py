@@ -1,5 +1,5 @@
 from django.shortcuts import render
-from .mymiddleware import rate_limit
+from .ratelimiter import rate_limit
 
 
 @rate_limit(limit=9, window=22)
