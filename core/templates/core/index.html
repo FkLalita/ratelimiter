@@ -14,8 +14,13 @@
         const responseDiv = document.getElementById('response');
 
         button.addEventListener('click', async () => {
-            const response = await fetch('/test-ratelimit');
-            responseDiv.textContent = await response.text();
+            try {
+                const response = await fetch('/ratelimit');
+                responseDiv.textContent = await response.text();
+            } catch (error) {
+                console.error(error);
+                responseDiv.textContent = "An error occurred. Please try again later.";
+            }
         });
     </script>
 </body>
